@@ -1,0 +1,136 @@
+Script started on Sat 30 Nov 2019 11:53:17 PM UTC
+[root@testlvm ~]# lsblk 
+NAME                     MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                        8:0    0   40G  0 disk 
+├─sda1                     8:1    0    1M  0 part 
+├─sda2                     8:2    0    1G  0 part /boot
+└─sda3                     8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00  253:0    0    8G  0 lvm  /
+  └─VolGroup00-LogVol01  253:1    0  1.5G  0 lvm  [SWAP]
+sdb                        8:16   0   10G  0 disk 
+└─vg_root-lv_root        253:4    0   10G  0 lvm  
+sdc                        8:32   0    2G  0 disk 
+├─vg_var-lv_var_rmeta_0  253:2    0    4M  0 lvm  
+│ └─vg_var-lv_var        253:7    0  952M  0 lvm  /var
+└─vg_var-lv_var_rimage_0 253:3    0  952M  0 lvm  
+  └─vg_var-lv_var        253:7    0  952M  0 lvm  /var
+sdd                        8:48   0    1G  0 disk 
+├─vg_var-lv_var_rmeta_1  253:5    0    4M  0 lvm  
+│ └─vg_var-lv_var        253:7    0  952M  0 lvm  /var
+└─vg_var-lv_var_rimage_1 253:6    0  952M  0 lvm  
+  └─vg_var-lv_var        253:7    0  952M  0 lvm  /var
+sde                        8:64   0    1G  0 disk 
+[root@testlvm ~]# lvremove /dev/vg_root/lv_root 
+Do you really want to remove active logical volume vg_root/lv_root? [y/n]: y
+  Logical volume "lv_root" successfully removed
+[root@testlvm ~]# vgremove /dev/vg_root
+  Volume group "vg_root" successfully removed
+[root@testlvm ~]# pvremove /dev/sdb
+  Labels on physical volume "/dev/sdb" successfully wiped.
+[root@testlvm ~]# lvcreate -n LogVol_Home -L 2G /dev/VolGro
+up00
+  Logical volume "LogVol_Home" created.
+[root@testlvm ~]# mkfs.xfs /dev/VolGroup00/LogVol_Home 
+meta-data=/dev/VolGroup00/LogVol_Home isize=512    agcount=4, agsize=131072 blks
+
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=0, sparse=0
+data     =                       bsize=4096   blocks=524288, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
+log      =internal log           bsize=4096   blocks=2560, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+[root@testlvm ~]# mount /dev/VolGroup00/LogVol_Home /mnt/
+[root@testlvm ~]# cp -aR /home/* /mnt/
+[root@testlvm ~]# ll /mnt/
+total 0
+drwx------. 3 vagrant vagrant 74 May 12  2018 vagrant
+[root@testlvm ~]# ll /home/
+total 0
+drwx------. 3 vagrant vagrant 74 May 12  2018 vagrant
+[root@testlvm ~]# rm -rf /home/*
+[root@testlvm ~]# umount /mnt/
+[root@testlvm ~]# mount /dev/VolGroup00/LogVol_Home
+ /home/
+[root@testlvm ~]# echo "`blkid | grep Home | awk '{print $2}'` 
+s 0 0" >> /etc/fstab
+[root@testlvm ~]# touch /home/file{1..20}
+[root@testlvm ~]# lvcreate -L 100MB -s -n hom[Ke_snap /dev/VolG
+roup00/LogVol_Home
+  Rounding up size to full physical extent 128.00 MiB
+  Logical volume "home_snap" created.
+[root@testlvm ~]# ll /home/
+total 0
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file1
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file10
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file11
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file12
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file13
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file14
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file15
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file16
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file17
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file18
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file19
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file2
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file20
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file3
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file4
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file5
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file6
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file7
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file8
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file9
+drwx------. 3 vagrant vagrant 74 May 12  2018 vagrant
+[root@testlvm ~]# rm -f /home/file{11..15}
+[root@testlvm ~]# ll /home/
+total 0
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file1
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file10
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file16
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file17
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file18
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file19
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file2
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file20
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file3
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file4
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file5
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file6
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file7
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file8
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file9
+drwx------. 3 vagrant vagrant 74 May 12  2018 vagrant
+[root@testlvm ~]# umount /home
+[root@testlvm ~]# lvconvert --merge /dev/VolGroup00/home_snap 
+  Merging of volume VolGroup00/home_snap started.
+  VolGroup00/LogVol_Home: Merged: 100.00%
+[root@testlvm ~]# mount /home/
+[root@testlvm ~]# ll /home/
+total 0
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file1
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file10
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file11
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file12
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file13
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file14
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file15
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file16
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file17
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file18
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file19
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file2
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file20
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file3
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file4
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file5
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file6
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file7
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file8
+-rw-r--r--. 1 root    root     0 Nov 30 23:57 file9
+drwx------. 3 vagrant vagrant 74 May 12  2018 vagrant
+[root@testlvm ~]# exit
+
+Script done on Sun 01 Dec 2019 12:00:38 AM UTC
+
